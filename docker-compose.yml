@@ -1,0 +1,117 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: bank-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "050130"
+      MYSQL_DATABASE: bank_db
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./backend/src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./backend/src/main/resources/db/data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  bank-backend:
+    build:
+      context: ./backend
+    container_name: bank-backend
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+    environment:
+      SERVER_PORT: 8080
+      DB_URL: jdbc:mysql://mysql:3306/bank_db?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      DB_USERNAME: root
+      DB_PASSWORD: "050130"
+      REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: bank
+      RABBITMQ_PASSWORD: bank123
+      JWT_SECRET: change-this-demo-secret-to-a-long-random-value
+      BANK_DATA_SECRET: change-this-data-secret
+      BANK_DEMO_DATA_ENABLED: "true"
+    ports:
+      - "8080:8080"
+
+  bank-frontend:
+    build:
+      context: ./frontend
+    container_name: bank-frontend
+    depends_on:
+      - bank-backend
+    ports:
+      - "5173:80"
+
+  bank-agent:
+    build:
+      context: ./agent
+      args:
+        VITE_API_BASE_URL: http://localhost:8080
+    container_name: bank-agent
+    depends_on:
+      - bank-backend
+    ports:
+      - "5174:80"
+
+  bank-algorithm:
+    build:
+      context: ./algorithm
+    container_name: bank-algorithm
+    ports:
+      - "8090:8090"
+
+  redis:
+    image: redis:7
+    container_name: bank-redis
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: bank-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: bank
+      RABBITMQ_DEFAULT_PASS: bank123
+
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: bank-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ENABLE_KRAFT: "yes"
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.2.0
+    container_name: bank-rocketmq-namesrv
+    ports:
+      - "9876:9876"
+    command: sh mqnamesrv
+
+  rocketmq-broker:
+    image: apache/rocketmq:5.2.0
+    container_name: bank-rocketmq-broker
+    depends_on:
+      - rocketmq-namesrv
+    ports:
+      - "10911:10911"
+    environment:
+      NAMESRV_ADDR: rocketmq-namesrv:9876
+    command: sh mqbroker -n rocketmq-namesrv:9876
+
+volumes:
+  mysql-data:

@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:bank_db;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:test-schema.sql
+      data-locations: classpath:test-data.sql
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+bank:
+  jwt:
+    secret: test-secret-with-enough-length-for-hmac
+    access-token-minutes: 120
+  security:
+    login-max-failures: 5
+    login-lock-minutes: 10
+    single-transfer-limit: 50000
+    daily-transfer-limit: 100000
+    large-transfer-threshold: 20000
+  demo-data:
+    enabled: false
+  redis:
+    enabled: false
+  rabbit:
+    enabled: false

@@ -1,0 +1,350 @@
+DROP TABLE IF EXISTS bank_batch_transfer_task;
+DROP TABLE IF EXISTS bank_scheduled_transfer;
+DROP TABLE IF EXISTS bank_agent_draft;
+DROP TABLE IF EXISTS bank_reconciliation_report;
+DROP TABLE IF EXISTS bank_message_outbox;
+DROP TABLE IF EXISTS bank_credit_bill;
+DROP TABLE IF EXISTS bank_credit_card;
+DROP TABLE IF EXISTS bank_loan_repayment_plan;
+DROP TABLE IF EXISTS bank_loan_application;
+DROP TABLE IF EXISTS bank_holding;
+DROP TABLE IF EXISTS bank_product;
+DROP TABLE IF EXISTS bank_risk_event;
+DROP TABLE IF EXISTS bank_audit_log;
+DROP TABLE IF EXISTS bank_notification_send_record;
+DROP TABLE IF EXISTS bank_notification;
+DROP TABLE IF EXISTS bank_kyc_record;
+DROP TABLE IF EXISTS bank_contact;
+DROP TABLE IF EXISTS bank_transaction_record;
+DROP TABLE IF EXISTS bank_transfer_order;
+DROP TABLE IF EXISTS bank_account;
+DROP TABLE IF EXISTS bank_password_history;
+DROP TABLE IF EXISTS bank_user_security;
+DROP TABLE IF EXISTS bank_user;
+
+CREATE TABLE bank_user (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_name VARCHAR(64) NOT NULL,
+  id_card VARCHAR(512) NOT NULL,
+  id_card_hash VARCHAR(128) NOT NULL UNIQUE,
+  phone VARCHAR(512) NOT NULL,
+  phone_hash VARCHAR(128) NOT NULL UNIQUE,
+  status VARCHAR(32) NOT NULL DEFAULT 'NORMAL',
+  kyc_status VARCHAR(32) NOT NULL DEFAULT 'VERIFIED',
+  role VARCHAR(32) NOT NULL DEFAULT 'USER',
+  token_version INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE bank_user_security (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  login_password_hash VARCHAR(128) NOT NULL,
+  trade_password_hash VARCHAR(128) NOT NULL,
+  login_fail_count INT NOT NULL DEFAULT 0,
+  locked_until TIMESTAMP NULL,
+  otp_enabled TINYINT NOT NULL DEFAULT 0,
+  otp_secret VARCHAR(128),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_password_history (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  password_hash VARCHAR(128) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_account (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  account_number VARCHAR(32) NOT NULL UNIQUE,
+  user_id BIGINT NOT NULL,
+  account_type VARCHAR(32) NOT NULL DEFAULT 'CURRENT',
+  status VARCHAR(32) NOT NULL DEFAULT 'NORMAL',
+  currency VARCHAR(8) NOT NULL DEFAULT 'CNY',
+  available_balance DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+  frozen_balance DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+  version INT NOT NULL DEFAULT 0,
+  open_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  closed_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE bank_transfer_order (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  order_no VARCHAR(64) NOT NULL UNIQUE,
+  user_id BIGINT NOT NULL,
+  from_account VARCHAR(32) NOT NULL,
+  to_account VARCHAR(32) NOT NULL,
+  to_bank_name VARCHAR(64),
+  amount DECIMAL(18,2) NOT NULL,
+  fee DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+  remark VARCHAR(200),
+  status VARCHAR(32) NOT NULL DEFAULT 'INIT',
+  failure_reason VARCHAR(255),
+  idempotency_key VARCHAR(128),
+  risk_action VARCHAR(32) NOT NULL DEFAULT 'PASS',
+  scheduled_at TIMESTAMP NULL,
+  executed_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX uk_bank_transfer_order_idempotent ON bank_transfer_order(user_id, idempotency_key);
+
+CREATE TABLE bank_transaction_record (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  record_no VARCHAR(64) NOT NULL UNIQUE,
+  order_no VARCHAR(64),
+  user_id BIGINT NOT NULL,
+  account_number VARCHAR(32) NOT NULL,
+  direction VARCHAR(8) NOT NULL,
+  amount DECIMAL(18,2) NOT NULL,
+  balance_after DECIMAL(18,2) NOT NULL,
+  counterparty_account VARCHAR(32),
+  counterparty_name VARCHAR(64),
+  transaction_type VARCHAR(32) NOT NULL,
+  category VARCHAR(32) NOT NULL DEFAULT 'TRANSFER',
+  remark VARCHAR(200),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_contact (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  contact_name VARCHAR(64) NOT NULL,
+  account_number VARCHAR(32) NOT NULL,
+  bank_name VARCHAR(64) NOT NULL DEFAULT '本行',
+  phone VARCHAR(512),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE bank_kyc_record (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  id_card_hash VARCHAR(128) NOT NULL,
+  front_file_ref VARCHAR(255),
+  back_file_ref VARCHAR(255),
+  face_result VARCHAR(64),
+  face_score DECIMAL(8,4),
+  channel VARCHAR(64) NOT NULL DEFAULT 'MANUAL_DEMO',
+  status VARCHAR(32) NOT NULL DEFAULT 'VERIFIED',
+  review_comment VARCHAR(255),
+  reviewed_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_notification (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  title VARCHAR(120) NOT NULL,
+  content VARCHAR(500) NOT NULL,
+  channel VARCHAR(32) NOT NULL DEFAULT 'IN_APP',
+  business_type VARCHAR(64) NOT NULL,
+  read_flag TINYINT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_notification_send_record (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  notification_id BIGINT,
+  user_id BIGINT NOT NULL,
+  channel VARCHAR(32) NOT NULL,
+  template_code VARCHAR(64) NOT NULL,
+  payload VARCHAR(1000) NOT NULL,
+  send_status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+  failure_reason VARCHAR(255),
+  retry_count INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_audit_log (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT,
+  operation_type VARCHAR(64) NOT NULL,
+  resource_type VARCHAR(64) NOT NULL,
+  resource_id VARCHAR(128),
+  ip VARCHAR(64),
+  user_agent VARCHAR(255),
+  trace_id VARCHAR(64),
+  result VARCHAR(32) NOT NULL,
+  detail VARCHAR(500),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_risk_event (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  event_id VARCHAR(64) NOT NULL UNIQUE,
+  user_id BIGINT NOT NULL,
+  account_number VARCHAR(32),
+  order_no VARCHAR(64),
+  risk_type VARCHAR(64) NOT NULL,
+  risk_score DECIMAL(8,2) NOT NULL,
+  risk_level VARCHAR(32) NOT NULL,
+  action VARCHAR(32) NOT NULL,
+  reason VARCHAR(500),
+  status VARCHAR(32) NOT NULL DEFAULT 'OPEN',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_product (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  product_code VARCHAR(64) NOT NULL UNIQUE,
+  product_name VARCHAR(120) NOT NULL,
+  product_type VARCHAR(32) NOT NULL,
+  risk_level VARCHAR(32) NOT NULL,
+  term_days INT NOT NULL DEFAULT 0,
+  expected_yield DECIMAL(10,4) NOT NULL DEFAULT 0.0000,
+  min_amount DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+  status VARCHAR(32) NOT NULL DEFAULT 'ON_SHELF',
+  description VARCHAR(500),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_holding (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  account_number VARCHAR(32) NOT NULL,
+  product_code VARCHAR(64) NOT NULL,
+  product_type VARCHAR(32) NOT NULL,
+  amount DECIMAL(18,2) NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'HOLDING',
+  start_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  maturity_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_loan_application (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  product_code VARCHAR(64) NOT NULL,
+  applicant_name VARCHAR(64) NOT NULL,
+  amount DECIMAL(18,2) NOT NULL,
+  term_months INT NOT NULL,
+  purpose VARCHAR(200),
+  auto_score DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+  status VARCHAR(32) NOT NULL DEFAULT 'APPLYING',
+  review_comment VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_loan_repayment_plan (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  loan_application_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  period_no INT NOT NULL,
+  due_date DATE NOT NULL,
+  principal DECIMAL(18,2) NOT NULL,
+  interest DECIMAL(18,2) NOT NULL,
+  total_amount DECIMAL(18,2) NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'UNPAID',
+  paid_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_credit_card (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  card_number VARCHAR(32) NOT NULL UNIQUE,
+  product_code VARCHAR(64) NOT NULL,
+  credit_limit DECIMAL(18,2) NOT NULL,
+  used_amount DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+  points INT NOT NULL DEFAULT 0,
+  status VARCHAR(32) NOT NULL DEFAULT 'PENDING_ACTIVATION',
+  bill_day INT NOT NULL DEFAULT 10,
+  repayment_day INT NOT NULL DEFAULT 25,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_credit_bill (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  credit_card_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  bill_month VARCHAR(16) NOT NULL,
+  bill_amount DECIMAL(18,2) NOT NULL,
+  min_repayment DECIMAL(18,2) NOT NULL,
+  due_date DATE NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'UNPAID',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_message_outbox (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  topic VARCHAR(128) NOT NULL,
+  event_type VARCHAR(64) NOT NULL,
+  business_key VARCHAR(128) NOT NULL,
+  payload VARCHAR(2000) NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+  retry_count INT NOT NULL DEFAULT 0,
+  next_retry_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_reconciliation_report (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  report_date DATE NOT NULL UNIQUE,
+  account_count INT NOT NULL DEFAULT 0,
+  total_balance DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+  record_count INT NOT NULL DEFAULT 0,
+  order_count INT NOT NULL DEFAULT 0,
+  exception_count INT NOT NULL DEFAULT 0,
+  status VARCHAR(32) NOT NULL DEFAULT 'NORMAL',
+  detail VARCHAR(1000),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_agent_draft (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  draft_no VARCHAR(64) NOT NULL UNIQUE,
+  user_id BIGINT NOT NULL,
+  draft_type VARCHAR(64) NOT NULL,
+  payload VARCHAR(2000) NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'WAITING_CONFIRM',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_scheduled_transfer (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  order_no VARCHAR(64) NOT NULL UNIQUE,
+  from_account VARCHAR(32) NOT NULL,
+  to_account VARCHAR(32) NOT NULL,
+  amount DECIMAL(18,2) NOT NULL,
+  remark VARCHAR(200),
+  status VARCHAR(32) NOT NULL DEFAULT 'SCHEDULED',
+  scheduled_at TIMESTAMP NOT NULL,
+  executed_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bank_batch_transfer_task (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  task_no VARCHAR(64) NOT NULL UNIQUE,
+  user_id BIGINT NOT NULL,
+  total_count INT NOT NULL DEFAULT 0,
+  success_count INT NOT NULL DEFAULT 0,
+  failed_count INT NOT NULL DEFAULT 0,
+  status VARCHAR(32) NOT NULL DEFAULT 'INIT',
+  detail VARCHAR(2000),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -1,0 +1,32 @@
+{
+  "transactions": [
+    {
+      "transaction_id": "T001",
+      "from_account": "A100",
+      "to_account": "B200",
+      "amount": "48000.00",
+      "timestamp": "2026-06-01T09:00:00"
+    },
+    {
+      "transaction_id": "T002",
+      "from_account": "A100",
+      "to_account": "C300",
+      "amount": "47000.00",
+      "timestamp": "2026-06-01T09:15:00"
+    },
+    {
+      "transaction_id": "T003",
+      "from_account": "A100",
+      "to_account": "D400",
+      "amount": "49000.00",
+      "timestamp": "2026-06-01T09:30:00"
+    },
+    {
+      "transaction_id": "T004",
+      "from_account": "B200",
+      "to_account": "A100",
+      "amount": "46000.00",
+      "timestamp": "2026-06-01T09:45:00"
+    }
+  ]
+}
