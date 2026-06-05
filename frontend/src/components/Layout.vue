@@ -5,7 +5,7 @@
         <el-icon><Wallet /></el-icon>
         <span>网上银行</span>
       </div>
-      <el-menu :default-active="$route.path" router background-color="#1f2f46" text-color="#c8d2df" active-text-color="#ffffff">
+      <el-menu :default-active="$route.path" router>
         <el-menu-item index="/dashboard"><el-icon><DataAnalysis /></el-icon><span>主控面板</span></el-menu-item>
         <el-menu-item index="/transfer"><el-icon><Money /></el-icon><span>转账汇款</span></el-menu-item>
         <el-menu-item index="/records"><el-icon><Document /></el-icon><span>交易流水</span></el-menu-item>
@@ -89,10 +89,13 @@ async function handleCommand(command) {
 <style scoped>
 .layout-container {
   min-height: 100vh;
+  background: var(--page-bg);
 }
 
 .sidebar {
-  background: #1f2f46;
+  background: #ffffff;
+  border-right: 1px solid var(--border);
+  box-shadow: 6px 0 18px rgba(15, 35, 66, 0.03);
 }
 
 .logo {
@@ -100,27 +103,57 @@ async function handleCommand(command) {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 20px;
-  color: white;
-  font-weight: 700;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 22px;
+  color: var(--text);
+  font-weight: 650;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .logo .el-icon {
-  font-size: 24px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: #ffffff;
+  background: var(--primary);
+  font-size: 20px;
 }
 
 .el-menu {
   border-right: 0;
+  padding: 12px;
+  --el-menu-bg-color: #ffffff;
+  --el-menu-text-color: #4b5563;
+  --el-menu-hover-bg-color: var(--surface-hover);
+  --el-menu-hover-text-color: var(--primary);
+  --el-menu-active-color: var(--primary);
+}
+
+.el-menu :deep(.el-menu-item) {
+  height: 44px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.el-menu :deep(.el-menu-item.is-active) {
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 650;
+}
+
+.el-menu :deep(.el-menu-item .el-icon) {
+  color: inherit;
 }
 
 .header {
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
 .user-info {
@@ -128,11 +161,13 @@ async function handleCommand(command) {
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  color: var(--text);
+  font-weight: 500;
 }
 
 .el-main {
   background: var(--page-bg);
-  padding: 20px;
+  padding: 24px;
 }
 
 @media (max-width: 820px) {

@@ -23,17 +23,19 @@
       </div>
     </div>
 
-    <el-row :gutter="16">
+    <el-row :gutter="16" class="dashboard-grid">
       <el-col :xs="24" :lg="16">
-        <el-card>
+        <el-card class="section-card">
           <template #header>我的账户</template>
-          <el-table v-loading="loading" :data="accounts" stripe>
+          <el-table v-loading="loading" :data="accounts">
             <el-table-column label="账号" min-width="220">
               <template #default="{ row }">
-                <span class="mono">{{ row.showFull ? formatCard(row.accountNumber) : row.accountNumberMasked }}</span>
-                <el-button type="primary" link size="small" :icon="View" @click="handleShowCard(row)">
-                  {{ row.showFull ? '隐藏' : '显示' }}
-                </el-button>
+                <div class="account-cell">
+                  <span class="mono">{{ row.showFull ? formatCard(row.accountNumber) : row.accountNumberMasked }}</span>
+                  <el-button type="primary" link size="small" :icon="View" @click="handleShowCard(row)">
+                    {{ row.showFull ? '隐藏' : '显示' }}
+                  </el-button>
+                </div>
               </template>
             </el-table-column>
             <el-table-column prop="accountType" label="类型" width="120">
@@ -61,17 +63,29 @@
       </el-col>
 
       <el-col :xs="24" :lg="8">
-        <el-card>
+        <el-card class="section-card">
           <template #header>快速操作</template>
           <div class="quick-actions">
-            <el-button type="primary" :icon="Money" @click="$router.push('/transfer')">转账汇款</el-button>
-            <el-button :icon="Document" @click="$router.push('/records')">交易流水</el-button>
-            <el-button :icon="Bell" @click="$router.push('/notifications')">通知中心</el-button>
-            <el-button :icon="ChatDotRound" @click="$router.push('/agent')">智能助手</el-button>
+            <button type="button" class="quick-action primary" @click="$router.push('/transfer')">
+              <el-icon><Money /></el-icon>
+              <span>转账汇款</span>
+            </button>
+            <button type="button" class="quick-action" @click="$router.push('/records')">
+              <el-icon><Document /></el-icon>
+              <span>交易流水</span>
+            </button>
+            <button type="button" class="quick-action" @click="$router.push('/notifications')">
+              <el-icon><Bell /></el-icon>
+              <span>通知中心</span>
+            </button>
+            <button type="button" class="quick-action" @click="$router.push('/agent')">
+              <el-icon><ChatDotRound /></el-icon>
+              <span>智能助手</span>
+            </button>
           </div>
         </el-card>
 
-        <el-card class="mt">
+        <el-card class="section-card mt">
           <template #header>最近流水</template>
           <el-empty v-if="recentRecords.length === 0" description="暂无流水" />
           <div v-for="record in recentRecords" :key="record.recordNo" class="record-line">
@@ -213,13 +227,46 @@ function typeName(type) {
 <style scoped>
 .quick-actions {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.quick-actions .el-button {
-  justify-content: flex-start;
-  margin-left: 0;
+.quick-action {
+  min-height: 78px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  color: var(--text);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.quick-action:hover {
+  border-color: #b9d2ff;
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.quick-action.primary {
+  border-color: var(--primary);
+  color: #fff;
+  background: var(--primary);
+}
+
+.quick-action.primary:hover {
+  background: var(--primary-hover);
+}
+
+.quick-action .el-icon {
+  font-size: 18px;
+}
+
+.quick-action span {
+  font-weight: 650;
 }
 
 .mt {
@@ -240,5 +287,18 @@ function typeName(type) {
 
 .record-line small {
   color: var(--muted);
+}
+
+.account-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

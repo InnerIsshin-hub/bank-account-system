@@ -8,10 +8,26 @@
       <el-button :icon="User" @click="$router.push('/contacts')">常用收款人</el-button>
     </div>
 
-    <el-card>
+    <el-card class="section-card">
+      <div class="transfer-rail">
+        <div class="rail-item active">
+          <span>1</span>
+          <strong>填写信息</strong>
+        </div>
+        <div class="rail-line"></div>
+        <div class="rail-item" :class="{ active: precheckResult }">
+          <span>2</span>
+          <strong>风险校验</strong>
+        </div>
+        <div class="rail-line"></div>
+        <div class="rail-item" :class="{ active: order }">
+          <span>3</span>
+          <strong>确认执行</strong>
+        </div>
+      </div>
       <el-tabs v-model="activeTab">
         <el-tab-pane label="单笔转账" name="single">
-          <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" class="form-narrow">
+          <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" class="form-narrow transfer-form">
             <el-form-item label="付款账户" prop="fromAccount">
               <el-select v-model="form.fromAccount" placeholder="请选择付款账户" class="full-width">
                 <el-option
@@ -96,13 +112,13 @@
               </el-form-item>
             </el-form>
 
-            <el-table v-if="batchResult.length" :data="batchResult" stripe>
+            <el-table v-if="batchResult.length" :data="batchResult">
               <el-table-column prop="toAccount" label="收款账户" min-width="160" />
               <el-table-column prop="counterpartyNameMasked" label="收款人" width="120" />
               <el-table-column prop="amount" label="金额" width="110" />
               <el-table-column prop="success" label="结果" width="90">
                 <template #default="{ row }">
-                  <el-tag :type="row.success === false ? 'danger' : 'success'">{{ row.success === false ? '失败' : '通过' }}</el-tag>
+                  <el-tag class="status-tag" :type="row.success === false ? 'danger' : 'success'">{{ row.success === false ? '失败' : '通过' }}</el-tag>
                 </template>
               </el-table-column>
               <el-table-column prop="message" label="说明" min-width="180" />
@@ -331,6 +347,54 @@ async function batchExecute() {
   max-width: 560px;
 }
 
+.transfer-rail {
+  display: grid;
+  grid-template-columns: auto minmax(24px, 1fr) auto minmax(24px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 4px 22px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 18px;
+}
+
+.rail-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.rail-item span {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-weight: 650;
+}
+
+.rail-item strong {
+  font-weight: 650;
+}
+
+.rail-item.active {
+  color: var(--primary);
+}
+
+.rail-item.active span {
+  border-color: var(--primary);
+  color: #fff;
+  background: var(--primary);
+}
+
+.rail-line {
+  height: 1px;
+  background: var(--border);
+}
+
 .confirm-lines {
   display: grid;
   gap: 10px;
@@ -355,6 +419,15 @@ async function batchExecute() {
 @media (max-width: 720px) {
   .precheck {
     margin-left: 0;
+  }
+
+  .transfer-rail {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .rail-line {
+    display: none;
   }
 }
 </style>

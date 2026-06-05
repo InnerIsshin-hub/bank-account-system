@@ -29,7 +29,7 @@
 
     <el-row :gutter="16">
       <el-col :xs="24" :lg="9">
-        <el-card v-loading="loading">
+        <el-card v-loading="loading" class="section-card">
           <template #header>账户资料</template>
           <div class="detail-list">
             <p><span>账号</span><strong class="mono">{{ detail.accountNumberFull || detail.accountNumber }}</strong></p>
@@ -46,14 +46,18 @@
       </el-col>
 
       <el-col :xs="24" :lg="15">
-        <el-card>
+        <el-card class="section-card">
           <template #header>最近交易</template>
-          <el-table :data="detail.recentRecords || []" stripe>
+          <el-table :data="detail.recentRecords || []">
             <el-table-column prop="createdAt" label="时间" min-width="170" />
-            <el-table-column prop="direction" label="方向" width="90" />
+            <el-table-column label="方向" width="90">
+              <template #default="{ row }">
+                <el-tag :type="row.direction === 'IN' ? 'success' : 'danger'">{{ row.direction === 'IN' ? '转入' : '转出' }}</el-tag>
+              </template>
+            </el-table-column>
             <el-table-column label="金额" width="130">
               <template #default="{ row }">
-                <strong :class="row.direction === 'IN' ? 'money-up' : 'money-down'">
+                <strong :class="['amount-strong', row.direction === 'IN' ? 'money-up' : 'money-down']">
                   {{ row.direction === 'IN' ? '+' : '-' }}{{ money(row.amount) }}
                 </strong>
               </template>

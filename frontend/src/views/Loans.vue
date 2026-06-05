@@ -6,7 +6,7 @@
     </div>
     <el-row :gutter="16">
       <el-col :xs="24" :lg="9">
-        <el-card>
+        <el-card class="section-card">
           <template #header>贷款申请</template>
           <el-form :model="form" label-position="top">
             <el-form-item label="贷款产品"><el-input v-model="form.productCode" /></el-form-item>
@@ -24,26 +24,42 @@
         </el-card>
       </el-col>
       <el-col :xs="24" :lg="15">
-        <el-card>
+        <el-card class="section-card">
           <template #header>我的申请</template>
-          <el-table v-loading="loading" :data="applications" stripe @row-click="loadPlans">
+          <el-table v-loading="loading" :data="applications" @row-click="loadPlans">
             <el-table-column prop="id" label="编号" width="80" />
             <el-table-column prop="productCode" label="产品" />
-            <el-table-column prop="amount" label="金额" />
+            <el-table-column label="金额">
+              <template #default="{ row }">¥ {{ Number(row.amount || 0).toFixed(2) }}</template>
+            </el-table-column>
             <el-table-column prop="termMonths" label="期限" />
             <el-table-column prop="autoScore" label="评分" />
-            <el-table-column prop="status" label="状态" />
+            <el-table-column label="状态">
+              <template #default="{ row }">
+                <el-tag class="status-tag" :type="row.status === 'APPROVED' ? 'success' : row.status === 'REJECTED' ? 'danger' : 'warning'">{{ row.status }}</el-tag>
+              </template>
+            </el-table-column>
           </el-table>
         </el-card>
-        <el-card class="mt">
+        <el-card class="section-card mt">
           <template #header>还款计划</template>
-          <el-table :data="plans" stripe>
+          <el-table :data="plans">
             <el-table-column prop="periodNo" label="期数" width="80" />
             <el-table-column prop="dueDate" label="到期日" />
-            <el-table-column prop="principal" label="本金" />
-            <el-table-column prop="interest" label="利息" />
-            <el-table-column prop="totalAmount" label="应还" />
-            <el-table-column prop="status" label="状态" />
+            <el-table-column label="本金">
+              <template #default="{ row }">¥ {{ Number(row.principal || 0).toFixed(2) }}</template>
+            </el-table-column>
+            <el-table-column label="利息">
+              <template #default="{ row }">¥ {{ Number(row.interest || 0).toFixed(2) }}</template>
+            </el-table-column>
+            <el-table-column label="应还">
+              <template #default="{ row }">¥ {{ Number(row.totalAmount || 0).toFixed(2) }}</template>
+            </el-table-column>
+            <el-table-column label="状态">
+              <template #default="{ row }">
+                <el-tag effect="plain">{{ row.status }}</el-tag>
+              </template>
+            </el-table-column>
           </el-table>
         </el-card>
       </el-col>

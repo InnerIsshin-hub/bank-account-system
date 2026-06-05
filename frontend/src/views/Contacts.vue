@@ -8,8 +8,8 @@
       <el-button type="primary" :icon="Plus" @click="openDialog()">新增收款人</el-button>
     </div>
 
-    <el-card>
-      <el-table v-loading="loading" :data="contacts" stripe>
+    <el-card class="section-card">
+      <el-table v-loading="loading" :data="contacts">
         <el-table-column prop="contactName" label="姓名" width="140" />
         <el-table-column prop="accountNumberMasked" label="账户" min-width="180" />
         <el-table-column prop="bankName" label="银行" width="140" />

@@ -1,16 +1,22 @@
 :root {
-  --page-bg: #f5f7fb;
+  --page-bg: #f3f6fb;
   --surface: #ffffff;
-  --surface-soft: #f8fafc;
-  --border: #dfe5ec;
-  --text: #253044;
-  --muted: #697589;
-  --primary: #2454a6;
-  --primary-soft: #eaf1ff;
-  --success: #16845f;
-  --danger: #c2413a;
-  --warning: #b7791f;
-  --shadow: 0 12px 28px rgba(23, 37, 84, 0.08);
+  --surface-soft: #f7f9fc;
+  --surface-hover: #eef4ff;
+  --border: #dce3ee;
+  --border-light: #edf1f7;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --text-placeholder: #9ca3af;
+  --primary: #0052d9;
+  --primary-hover: #266fe8;
+  --primary-active: #003cab;
+  --primary-soft: #e8f1ff;
+  --success: #00a870;
+  --danger: #e34d59;
+  --warning: #ed7b2f;
+  --shadow: 0 8px 24px rgba(15, 35, 66, 0.06);
+  --shadow-hover: 0 12px 32px rgba(15, 35, 66, 0.1);
   font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   color: var(--text);
   background: var(--page-bg);
@@ -40,7 +46,7 @@ a {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .toolbar {
@@ -53,13 +59,14 @@ a {
 
 .page-title {
   margin: 0;
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.35;
+  font-weight: 650;
   color: var(--text);
 }
 
 .page-subtitle {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   color: var(--muted);
   font-size: 14px;
 }
@@ -71,11 +78,21 @@ a {
 }
 
 .metric {
-  padding: 18px;
+  position: relative;
+  overflow: hidden;
+  padding: 18px 20px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
   box-shadow: var(--shadow);
+}
+
+.metric::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--primary);
 }
 
 .metric-label {
@@ -85,8 +102,8 @@ a {
 
 .metric-value {
   margin-top: 8px;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 650;
   color: var(--text);
 }
 
@@ -188,6 +205,35 @@ a {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-panel {
+  padding: 16px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  margin-bottom: 16px;
+}
+
+.filter-panel .el-form-item {
+  margin-bottom: 0;
+}
+
+.section-card {
+  overflow: hidden;
+}
+
+.section-card .el-tabs__header {
+  margin: 0 0 18px;
+}
+
+.status-tag {
+  font-weight: 600;
+}
+
+.amount-strong {
+  font-weight: 650;
 }
 
 .el-card {
@@ -197,7 +243,81 @@ a {
 }
 
 .el-card__header {
-  font-weight: 700;
+  padding: 18px 20px;
+  border-bottom-color: var(--border-light);
+  font-weight: 650;
+  color: var(--text);
+}
+
+.el-card__body {
+  padding: 20px;
+}
+
+.el-button {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.el-button--primary {
+  --el-button-bg-color: var(--primary);
+  --el-button-border-color: var(--primary);
+  --el-button-hover-bg-color: var(--primary-hover);
+  --el-button-hover-border-color: var(--primary-hover);
+  --el-button-active-bg-color: var(--primary-active);
+  --el-button-active-border-color: var(--primary-active);
+}
+
+.el-button.is-link {
+  --el-button-text-color: var(--primary);
+  --el-button-hover-link-text-color: var(--primary-hover);
+}
+
+.el-input__wrapper,
+.el-select__wrapper,
+.el-input-number .el-input__wrapper {
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px var(--border) inset;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1px var(--primary) inset, 0 0 0 3px rgba(0, 82, 217, 0.12);
+}
+
+.el-table {
+  --el-table-header-bg-color: #f7f9fc;
+  --el-table-header-text-color: #4b5563;
+  --el-table-row-hover-bg-color: #f3f7ff;
+  --el-table-border-color: var(--border-light);
+  color: var(--text);
+}
+
+.el-table th.el-table__cell {
+  font-weight: 650;
+}
+
+.el-table .el-table__cell {
+  padding: 13px 0;
+}
+
+.el-tag {
+  border-radius: 4px;
+}
+
+.el-dialog {
+  border-radius: 8px;
+}
+
+.el-dialog__header {
+  padding: 20px 24px 12px;
+}
+
+.el-dialog__body {
+  padding: 12px 24px 20px;
+}
+
+.el-dialog__footer {
+  padding: 12px 24px 22px;
 }
 
 @media (max-width: 900px) {

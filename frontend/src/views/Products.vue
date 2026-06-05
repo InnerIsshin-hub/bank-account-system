@@ -12,12 +12,32 @@
       <el-col :xs="24" :lg="14">
         <el-card>
           <template #header>产品列表</template>
-          <el-table v-loading="loading" :data="products" stripe>
-            <el-table-column prop="productName" label="产品" min-width="160" />
-            <el-table-column prop="riskLevel" label="风险" width="100" />
+          <el-table v-loading="loading" :data="products">
+            <el-table-column label="产品" min-width="220">
+              <template #default="{ row }">
+                <div class="product-cell">
+                  <div class="product-name">{{ row.productName }}</div>
+                  <div class="product-meta">
+                    <el-tag size="small" effect="plain">{{ typeName(row.productType) }}</el-tag>
+                    <span>{{ row.productCode }}</span>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column label="风险" width="110">
+              <template #default="{ row }">
+                <el-tag :type="riskTag(row.riskLevel)" effect="light">{{ riskName(row.riskLevel) }}</el-tag>
+              </template>
+            </el-table-column>
             <el-table-column prop="termDays" label="期限(天)" width="100" />
-            <el-table-column prop="expectedYield" label="预期收益" width="110" />
-            <el-table-column prop="minAmount" label="起购金额" width="120" />
+            <el-table-column label="预期收益" width="120">
+              <template #default="{ row }">
+                <strong class="yield">{{ Number(row.expectedYield || 0).toFixed(2) }}%</strong>
+              </template>
+            </el-table-column>
+            <el-table-column label="起购金额" width="130">
+              <template #default="{ row }">¥ {{ Number(row.minAmount || 0).toFixed(2) }}</template>
+            </el-table-column>
             <el-table-column label="操作" width="100">
               <template #default="{ row }"><el-button link type="primary" @click="openPurchase(row)">购买</el-button></template>
             </el-table-column>
@@ -27,10 +47,20 @@
       <el-col :xs="24" :lg="10">
         <el-card>
           <template #header>我的持仓</template>
-          <el-table :data="holdings" stripe>
-            <el-table-column prop="productCode" label="产品" />
-            <el-table-column prop="amount" label="金额" />
-            <el-table-column prop="status" label="状态" />
+          <el-table :data="holdings">
+            <el-table-column label="产品" min-width="150">
+              <template #default="{ row }">
+                <span class="mono">{{ row.productCode }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="金额" width="130">
+              <template #default="{ row }">¥ {{ Number(row.amount || 0).toFixed(2) }}</template>
+            </el-table-column>
+            <el-table-column label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="row.status === 'HOLDING' ? 'success' : 'info'" effect="light">{{ row.status }}</el-tag>
+              </template>
+            </el-table-column>
             <el-table-column width="90">
               <template #default="{ row }"><el-button v-if="row.status === 'HOLDING'" link type="primary" @click="redeem(row.id)">赎回</el-button></template>
             </el-table-column>
@@ -105,6 +135,18 @@ function openPurchase(product) {
   purchaseVisible.value = true
 }
 
+function typeName(type) {
+  return ({ DEPOSIT: '定期存款', WEALTH: '理财', LOAN: '贷款', CREDIT_CARD: '信用卡' }[type] || type)
+}
+
+function riskName(level) {
+  return ({ LOW: '低风险', MEDIUM: '中风险', HIGH: '高风险' }[level] || level)
+}
+
+function riskTag(level) {
+  return ({ LOW: 'success', MEDIUM: 'warning', HIGH: 'danger' }[level] || 'info')
+}
+
 async function purchase() {
   purchasing.value = true
   try {
@@ -123,3 +165,28 @@ async function redeem(id) {
   await Promise.all([loadHoldings(), loadAccounts()])
 }
 </script>
+
+<style scoped>
+.product-cell {
+  display: grid;
+  gap: 6px;
+}
+
+.product-name {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.product-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.yield {
+  color: var(--primary);
+  font-weight: 650;
+}
+</style>

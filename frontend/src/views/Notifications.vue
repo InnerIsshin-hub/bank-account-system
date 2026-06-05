@@ -4,10 +4,10 @@
       <h1 class="page-title">通知中心</h1>
       <p class="page-subtitle">动账提醒、登录提醒和业务处理结果</p>
     </div>
-    <el-card>
-      <el-table v-loading="loading" :data="records" stripe>
+    <el-card class="section-card">
+      <el-table v-loading="loading" :data="records">
         <el-table-column label="状态" width="80">
-          <template #default="{ row }"><el-tag :type="row.readFlag ? 'info' : 'warning'">{{ row.readFlag ? '已读' : '未读' }}</el-tag></template>
+          <template #default="{ row }"><el-tag class="status-tag" :type="row.readFlag ? 'info' : 'warning'">{{ row.readFlag ? '已读' : '未读' }}</el-tag></template>
         </el-table-column>
         <el-table-column prop="title" label="标题" width="180" />
         <el-table-column prop="content" label="内容" min-width="260" />

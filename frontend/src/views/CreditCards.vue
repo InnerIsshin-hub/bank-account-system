@@ -7,26 +7,42 @@
       </div>
       <el-button type="primary" :icon="Plus" @click="applyVisible = true">在线申卡</el-button>
     </div>
-    <el-card>
-      <el-table v-loading="loading" :data="cards" stripe @row-click="loadBills">
+    <el-card class="section-card">
+      <el-table v-loading="loading" :data="cards" @row-click="loadBills">
         <el-table-column prop="cardNumber" label="卡号" />
-        <el-table-column prop="creditLimit" label="额度" />
-        <el-table-column prop="usedAmount" label="已用" />
+        <el-table-column label="额度">
+          <template #default="{ row }">¥ {{ Number(row.creditLimit || 0).toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column label="已用">
+          <template #default="{ row }">¥ {{ Number(row.usedAmount || 0).toFixed(2) }}</template>
+        </el-table-column>
         <el-table-column prop="points" label="积分" />
-        <el-table-column prop="status" label="状态" />
+        <el-table-column label="状态">
+          <template #default="{ row }">
+            <el-tag class="status-tag" :type="row.status === 'ACTIVE' ? 'success' : 'warning'">{{ row.status }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="120">
           <template #default="{ row }"><el-button v-if="row.status !== 'ACTIVE'" link type="primary" @click.stop="openActivate(row)">激活</el-button></template>
         </el-table-column>
       </el-table>
     </el-card>
-    <el-card class="mt">
+    <el-card class="section-card mt">
       <template #header>账单</template>
-      <el-table :data="bills" stripe>
+      <el-table :data="bills">
         <el-table-column prop="billMonth" label="月份" />
-        <el-table-column prop="billAmount" label="账单金额" />
-        <el-table-column prop="minRepayment" label="最低还款" />
+        <el-table-column label="账单金额">
+          <template #default="{ row }">¥ {{ Number(row.billAmount || 0).toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column label="最低还款">
+          <template #default="{ row }">¥ {{ Number(row.minRepayment || 0).toFixed(2) }}</template>
+        </el-table-column>
         <el-table-column prop="dueDate" label="还款日" />
-        <el-table-column prop="status" label="状态" />
+        <el-table-column label="状态">
+          <template #default="{ row }">
+            <el-tag effect="plain">{{ row.status }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="120">
           <template #default="{ row }"><el-button link type="primary" @click="installment(row.id)">分期</el-button></template>
         </el-table-column>

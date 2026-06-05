@@ -8,8 +8,8 @@
       <el-button :icon="Download" @click="exportCsv">导出 CSV</el-button>
     </div>
 
-    <el-card>
-      <el-form :inline="true" :model="queryForm">
+    <el-card class="section-card">
+      <el-form :inline="true" :model="queryForm" class="filter-panel">
         <el-form-item label="账户">
           <el-select v-model="queryForm.accountNumber" placeholder="全部账户" clearable style="width: 220px">
             <el-option v-for="acc in accounts" :key="acc.accountNumber" :label="acc.accountNumberMasked" :value="acc.accountNumber" />
@@ -40,7 +40,7 @@
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :data="records" stripe>
+      <el-table v-loading="loading" :data="records">
         <el-table-column prop="createdAt" label="交易时间" min-width="170" />
         <el-table-column prop="accountNumber" label="本方账户" min-width="160" />
         <el-table-column label="方向" width="90">
@@ -50,7 +50,7 @@
         </el-table-column>
         <el-table-column label="金额" width="140">
           <template #default="{ row }">
-            <strong :class="row.direction === 'IN' ? 'money-up' : 'money-down'">
+            <strong :class="['amount-strong', row.direction === 'IN' ? 'money-up' : 'money-down']">
               {{ row.direction === 'IN' ? '+' : '-' }} ¥ {{ Number(row.amount).toFixed(2) }}
             </strong>
           </template>
