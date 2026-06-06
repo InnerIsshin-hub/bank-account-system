@@ -49,7 +49,7 @@ function toMessage(role: ChatMessage['role'], content: unknown, title?: string):
     id: crypto.randomUUID?.() || `${Date.now()}${Math.random()}`,
     role,
     title,
-    content: typeof content === 'string' ? content : JSON.stringify(content, null, 2),
+    content,
     createdAt: now()
   }
 }
@@ -252,7 +252,7 @@ export default function App() {
                     <span>{item.title || item.role}</span>
                     <time>{item.createdAt}</time>
                   </header>
-                  <pre>{item.content}</pre>
+                  <MessageBody content={item.content} />
                 </article>
               ))}
             </div>
@@ -319,4 +319,274 @@ export default function App() {
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error)
+}
+
+function MessageBody({ content }: { content: unknown }) {
+  if (typeof content === 'string') {
+    return <p className="message-text">{content}</p>
+  }
+  if (!isRecord(content)) {
+    return <p className="message-text">{String(content)}</p>
+  }
+
+  if (isSkillEnvelope(content)) {
+    return (
+      <div className="result-stack">
+        <SummaryRow label="技能" value={content.skill} />
+        <StructuredResult value={content.result} />
+      </div>
+    )
+  }
+
+  return <StructuredResult value={content} />
+}
+
+function StructuredResult({ value }: { value: unknown }) {
+  if (!isRecord(value)) {
+    return <p className="message-text">{String(value)}</p>
+  }
+
+  if (isRecord(value.user) || Array.isArray(value.accounts)) {
+    return <AccountSummary value={value} />
+  }
+  if (Array.isArray(value.accounts) || value.totalAssets !== undefined) {
+    return <AccountSummary value={value} />
+  }
+  if (Array.isArray(value.records)) {
+    return <RecordSummary value={value} />
+  }
+  if (Array.isArray(value.categoryChart)) {
+    return <BillSummary value={value} />
+  }
+  if (value.intent || value.message || value.summary) {
+    return <AgentIntent value={value} />
+  }
+
+  return <KeyValuePanel value={value} />
+}
+
+function AccountSummary({ value }: { value: Record<string, unknown> }) {
+  const user = isRecord(value.user) ? value.user : null
+  const accounts = asRecordArray(value.accounts)
+  const total = value.totalAssets ?? accounts.reduce((sum, item) => sum + Number(item.availableBalance || item.balance || 0), 0)
+  return (
+    <div className="result-stack">
+      {user ? (
+        <div className="summary-card">
+          <div>
+            <span>当前用户</span>
+            <strong>{formatValue(user.userName)}</strong>
+          </div>
+          <div>
+            <span>身份</span>
+            <strong>{formatValue(user.role)}</strong>
+          </div>
+          <div>
+            <span>KYC</span>
+            <strong>{formatValue(user.kycStatus)}</strong>
+          </div>
+        </div>
+      ) : null}
+      <div className="summary-card">
+        <div>
+          <span>账户数量</span>
+          <strong>{accounts.length}</strong>
+        </div>
+        <div>
+          <span>总资产</span>
+          <strong>{formatMoney(total)}</strong>
+        </div>
+      </div>
+      {accounts.length > 0 ? (
+        <div className="mini-table">
+          <div className="mini-row mini-head">
+            <span>账户</span>
+            <span>类型</span>
+            <span>余额</span>
+          </div>
+          {accounts.map((account, index) => (
+            <div className="mini-row" key={`${account.accountNumber || account.rawAccountNumber || index}`}>
+              <span>{formatValue(account.accountNumber || account.accountNumberMasked || account.rawAccountNumber)}</span>
+              <span>{formatValue(account.accountType)}</span>
+              <strong>{formatMoney(account.availableBalance ?? account.balance)}</strong>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function RecordSummary({ value }: { value: Record<string, unknown> }) {
+  const records = asRecordArray(value.records).slice(0, 8)
+  return (
+    <div className="result-stack">
+      <div className="summary-card">
+        <div>
+          <span>流水数量</span>
+          <strong>{formatValue(value.total ?? records.length)}</strong>
+        </div>
+        <div>
+          <span>页码</span>
+          <strong>{formatValue(value.pageNo ?? 1)}</strong>
+        </div>
+      </div>
+      <div className="mini-table">
+        <div className="mini-row mini-head">
+          <span>摘要</span>
+          <span>方向</span>
+          <span>金额</span>
+        </div>
+        {records.map((record, index) => (
+          <div className="mini-row" key={`${record.recordNo || index}`}>
+            <span>{formatValue(record.remark || record.transactionType || record.category)}</span>
+            <span>{formatValue(record.direction)}</span>
+            <strong className={record.direction === 'IN' ? 'up' : 'down'}>{formatMoney(record.amount)}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function BillSummary({ value }: { value: Record<string, unknown> }) {
+  const chart = asRecordArray(value.categoryChart)
+  return (
+    <div className="result-stack">
+      <div className="summary-card">
+        <div>
+          <span>月份</span>
+          <strong>{formatValue(value.month)}</strong>
+        </div>
+        <div>
+          <span>总支出</span>
+          <strong>{formatMoney(value.totalExpense)}</strong>
+        </div>
+        <div>
+          <span>最大分类</span>
+          <strong>{formatValue(value.largestCategory)}</strong>
+        </div>
+      </div>
+      {value.tips ? <p className="message-text">{formatValue(value.tips)}</p> : null}
+      {chart.length > 0 ? (
+        <div className="mini-table">
+          <div className="mini-row mini-head">
+            <span>分类</span>
+            <span></span>
+            <span>金额</span>
+          </div>
+          {chart.map((item, index) => (
+            <div className="mini-row" key={`${item.category || index}`}>
+              <span>{formatValue(item.category)}</span>
+              <span></span>
+              <strong>{formatMoney(item.amount)}</strong>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function AgentIntent({ value }: { value: Record<string, unknown> }) {
+  return (
+    <div className="result-stack">
+      {value.intent ? <SummaryRow label="识别意图" value={value.intent} /> : null}
+      {value.message ? <p className="message-text">{formatValue(value.message)}</p> : null}
+      {value.summary ? <StructuredResult value={value.summary} /> : null}
+      {value.draft ? <KeyValuePanel value={isRecord(value.draft) ? value.draft : { draft: value.draft }} /> : null}
+      {Array.isArray(value.candidates) ? <RecordTable records={asRecordArray(value.candidates)} /> : null}
+    </div>
+  )
+}
+
+function KeyValuePanel({ value }: { value: Record<string, unknown> }) {
+  const entries = Object.entries(value).filter(([, item]) => item !== undefined && item !== null)
+  return (
+    <div className="kv-panel">
+      {entries.map(([key, item]) => (
+        <div className="kv-row" key={key}>
+          <span>{humanizeKey(key)}</span>
+          {Array.isArray(item) ? (
+            <RecordTable records={asRecordArray(item)} />
+          ) : isRecord(item) ? (
+            <KeyValuePanel value={item} />
+          ) : (
+            <strong>{formatValue(item)}</strong>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function RecordTable({ records }: { records: Array<Record<string, unknown>> }) {
+  if (records.length === 0) {
+    return <p className="message-text">暂无数据</p>
+  }
+  const keys = Object.keys(records[0]).slice(0, 4)
+  return (
+    <div className="mini-table embedded">
+      <div className="mini-row mini-head" style={{ gridTemplateColumns: `repeat(${keys.length}, minmax(0, 1fr))` }}>
+        {keys.map((key) => <span key={key}>{humanizeKey(key)}</span>)}
+      </div>
+      {records.slice(0, 6).map((record, index) => (
+        <div className="mini-row" key={index} style={{ gridTemplateColumns: `repeat(${keys.length}, minmax(0, 1fr))` }}>
+          {keys.map((key) => <span key={key}>{formatValue(record[key])}</span>)}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function SummaryRow({ label, value }: { label: string; value: unknown }) {
+  return (
+    <div className="summary-row">
+      <span>{label}</span>
+      <strong>{formatValue(value)}</strong>
+    </div>
+  )
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isSkillEnvelope(value: Record<string, unknown>): value is { skill: string; result: unknown } {
+  return typeof value.skill === 'string' && 'result' in value
+}
+
+function asRecordArray(value: unknown): Array<Record<string, unknown>> {
+  return Array.isArray(value) ? value.filter(isRecord) : []
+}
+
+function formatMoney(value: unknown) {
+  const number = Number(value || 0)
+  return `¥ ${Number.isFinite(number) ? number.toFixed(2) : '0.00'}`
+}
+
+function formatValue(value: unknown) {
+  if (value === undefined || value === null || value === '') return '-'
+  if (typeof value === 'number') return String(value)
+  if (typeof value === 'boolean') return value ? '是' : '否'
+  if (typeof value === 'string') return value
+  return JSON.stringify(value)
+}
+
+function humanizeKey(key: string) {
+  const names: Record<string, string> = {
+    action: '动作',
+    amount: '金额',
+    bankName: '银行',
+    category: '分类',
+    confirmRequired: '确认',
+    draftNo: '草稿号',
+    riskLevel: '风险等级',
+    riskScore: '风险分',
+    status: '状态',
+    total: '总数',
+    totalAssets: '总资产',
+    userName: '姓名'
+  }
+  return names[key] || key
 }

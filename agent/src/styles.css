@@ -383,12 +383,125 @@ button:disabled {
   font-weight: 750;
 }
 
-.message pre {
+.message-text {
   margin: 8px 0 0;
-  white-space: pre-wrap;
-  word-break: break-word;
   color: var(--text);
-  font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  line-height: 1.65;
+}
+
+.result-stack {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.summary-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.summary-card div,
+.summary-row {
+  padding: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.summary-card span,
+.summary-row span,
+.kv-row > span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.summary-card strong,
+.summary-row strong,
+.kv-row > strong {
+  display: block;
+  margin-top: 7px;
+  color: var(--text);
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.summary-row strong {
+  margin-top: 0;
+}
+
+.mini-table {
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.mini-table.embedded {
+  margin-top: 8px;
+}
+
+.mini-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(80px, 0.7fr) minmax(100px, 0.8fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 42px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border-light);
+}
+
+.mini-row:first-child {
+  border-top: 0;
+}
+
+.mini-head {
+  min-height: 36px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.mini-row span,
+.mini-row strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-row strong {
+  text-align: right;
+}
+
+.mini-row strong.up {
+  color: var(--success);
+}
+
+.mini-row strong.down {
+  color: var(--danger);
+}
+
+.kv-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.kv-row {
+  padding: 10px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--surface);
 }
 
 .composer {

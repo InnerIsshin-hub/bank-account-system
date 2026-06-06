@@ -47,7 +47,7 @@ export interface ChatMessage {
   id: string
   role: Role
   title?: string
-  content: string
+  content: unknown
   createdAt: string
 }
 
